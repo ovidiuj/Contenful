@@ -1,0 +1,19 @@
+{
+  "name"        : "render-space",
+  "description" : "command line tool that will use the Contentful Sync API to render a collection of HTML files using provided templates",
+  "authors"     : [
+    {
+      "name"  : "Ovidiu Juncanariu",
+      "email" : "ovidiu.j@gmail.com"
+    }
+  ],
+  "require": {
+    "silex/silex" :"~2.0",
+    "monolog/monolog": "~1.6",
+    "knplabs/console-service-provider": "dev-master",
+    "twig/twig": "~1.10"
+  },
+  "autoload": {
+    "psr-0": {"": "src/"}
+  }
+}
