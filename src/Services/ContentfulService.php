@@ -3,6 +3,14 @@
 namespace Services;
 
 
+use Entities\EntityFactory;
+use Entries\City;
+use Entries\Cat;
+use Entries\Dog;
+use Entries\Human;
+use Exceptions\ApiException;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Silex\Application;
 
 /**
@@ -32,6 +40,11 @@ class ContentfulService
     protected $errors;
 
     /**
+     * @var Client
+     */
+    private $httpClient;
+
+    /**
      * ContentfulService constructor.
      * @param Application $app
      */
@@ -39,6 +52,7 @@ class ContentfulService
     {
         $this->app = $app;
         $this->config = $this->app['c.api'];
+        $this->httpClient = new Client();
        
     }
 
@@ -47,14 +61,13 @@ class ContentfulService
      */
     protected function getEntries() {
         try {
-
-            $request = new ApiRequestService($this->config['entriesApiUrl'], ['space' => $this->app['space'], 'token' => $this->app['token']]);
-            $request->performRequest();
-            $this->entries = json_decode($request->getResponse());
-            $this->errors = $request->getErrors();
-        }
-        catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+            $requestUrl = str_replace(['{space}', '{token}'], [$this->app['space'], $this->app['token']], $this->config['entriesApiUrl']);
+            $res = $this->httpClient->request('GET', $requestUrl);
+            return json_decode($res->getBody());
+        } catch (ClientException $e) {
+            return new ApiException($e->getMessage());
+        } catch (\Exception $e) {
+            return new ApiException($e->getMessage());
         }
     }
 
@@ -63,102 +76,17 @@ class ContentfulService
      * @throws \Exception
      */
     public function run() {
-        $this->getEntries();
-        if(!empty($this->entries)) {
-            foreach ($this->entries->items as $key => $entry) {
+        $entries = $this->getEntries();
+        if(!empty($entries)) {
+            foreach ($entries->items as $key => $entry) {
                 if($entry->sys->locale == 'en-US') {
-                    switch ($entry->sys->contentType->sys->id) {
-                        case 'cat':
-                            $entryArr = $this->generateCatFields($entry);
-                            $this->renderTemplate($entry->sys->contentType->sys->id, $entryArr);
-                            break;
-                        case '1t9IbcfdCk6m04uISSsaIK':
-                            $entryArr = $this->generateCityFields($entry);
-                            $this->renderTemplate($entry->sys->contentType->sys->id, $entryArr);
-                            break;
-                        case 'dog':
-                            $entryArr = $this->generateDogFields($entry);
-                            $this->renderTemplate($entry->sys->contentType->sys->id, $entryArr);
-                            break;
-                        case 'human':
-                            $entryArr = $this->generateHumanFields($entry);
-                            $this->renderTemplate($entry->sys->contentType->sys->id, $entryArr);
-                            break;
-                    }
+                    $factory = new EntityFactory($this->app, $entry->sys->contentType->sys->id);
+                    $entity = $factory->getEntity();
+                    $entity->setProprieties($entry);
+                    $entity->renderTemplate();
                 }
-
             }
         }
         return true;
-    }
-
-    /**
-     * @param $entry
-     * @return mixed
-     */
-    protected function generateCatFields($entry) {
-
-        $entryArr['id'] = $entry->sys->id;
-        $entryArr['entry']['name'] = $entry->fields->name;
-        $entryArr['entry']['likes'] = $entry->fields->likes;
-        $entryArr['entry']['image'] = isset($entry->fields->image->sys->id) ? $entry->fields->image->sys->id : null;
-        $entryArr['entry']['lives'] = $entry->fields->lives;
-        $entryArr['entry']['bestFriend'] = isset($entry->fields->bestFriend->sys->id) ? $entry->fields->bestFriend->sys->id : null;
-        $entryArr['entry']['lives'] = $entry->fields->lives;
-
-        return $entryArr;
-    }
-
-    /**
-     * @param $entry
-     * @return mixed
-     */
-    protected function generateCityFields($entry) {
-        $entryArr['id'] = $entry->sys->id;
-        $entryArr['entry']['name'] = $entry->fields->name;
-        $entryArr['entry']['center']['lat'] = $entry->fields->center->lat;
-        $entryArr['entry']['center']['lon'] = $entry->fields->center->lon;
-
-        return $entryArr;
-    }
-
-    /**
-     * @param $entry
-     * @return mixed
-     */
-    protected function generateDogFields($entry) {
-        $entryArr['id'] = $entry->sys->id;
-        $entryArr['entry']['name'] = $entry->fields->name;
-        $entryArr['entry']['image'] = $entry->fields->image->sys->id;
-        $entryArr['entry']['description'] = $entry->fields->description;
-
-        return $entryArr;
-    }
-
-    /**
-     * @param $entry
-     * @return mixed
-     */
-    protected function generateHumanFields($entry) {
-
-        $entryArr['id'] = $entry->sys->id;
-        $entryArr['entry']['name'] = $entry->fields->name;
-        $entryArr['entry']['likes'] = $entry->fields->likes;
-        $entryArr['entry']['image'] = isset($entry->fields->image->sys->id) ? $entry->fields->image->sys->id : null;
-        $entryArr['entry']['description'] = $entry->fields->description;
-
-        return $entryArr;
-    }
-
-    /**
-     * @param $contentTypeId
-     * @param $entry
-     */
-    protected function renderTemplate($contentTypeId, $entry) {
-        $id = $entry['id'];
-        unset($entry['id']);
-        $outputFileName = $id . '.html';
-        $res = $this->app['twig']->render($contentTypeId . '.twig', $entry);
-        file_put_contents(OUTPUT_PATH . $outputFileName, $res);
     }
 }

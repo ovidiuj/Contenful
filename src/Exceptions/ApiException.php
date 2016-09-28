@@ -1,15 +1,13 @@
 <?php
+
+namespace Exceptions;
+
+
 /**
- * Created by PhpStorm.
- * User: ovidiu
- * Date: 29.09.16
- * Time: 01:09
+ * Class ApiException
+ * @package Exceptions
  */
-
-namespace ApiException;
-
-
-class Exceptions
+class ApiException extends \Exception
 {
 
 }

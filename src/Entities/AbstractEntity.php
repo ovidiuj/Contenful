@@ -1,13 +1,14 @@
 <?php
 
-namespace Entries;
+namespace Entities;
+use Interfaces\EntityInterface;
 use Silex\Application;
 
 /**
- * Class AbstractEntry
+ * Class AbstractEntity
  * @package Entities
  */
-abstract class AbstractEntry implements EntryInterface
+abstract class AbstractEntity implements EntityInterface
 {
 
     /**
@@ -24,14 +25,9 @@ abstract class AbstractEntry implements EntryInterface
      * @var Application
      */
     protected $app;
-    
-    /**
-     * @param $contentTypeId
-     * @param $entry
-     */
 
     /**
-     * AbstractEntry constructor.
+     * AbstractEntity constructor.
      * @param Application $app
      */
     public function __construct(Application $app)
@@ -44,7 +40,6 @@ abstract class AbstractEntry implements EntryInterface
      */
     public function renderTemplate() {
         $outputFileName = $this->id . '.html';
-        print_r($this->toArray());
         $res = $this->app['twig']->render($this->contentTypeId . '.twig', $this->toArray());
         file_put_contents(OUTPUT_PATH . $outputFileName, $res);
     }
@@ -55,9 +50,9 @@ abstract class AbstractEntry implements EntryInterface
     abstract public function toArray();
 
     /**
-     * @param $entry
+     * @param $entity
      * @return mixed
      */
-    abstract public function setProprieties($entry);
+    abstract public function setProprieties($entity);
     
 }

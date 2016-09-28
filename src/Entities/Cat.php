@@ -1,13 +1,13 @@
 <?php
 
-namespace Entries;
+namespace Entities;
 use Silex\Application;
 
 /**
  * Class Cat
  * @package Entities
  */
-class Cat extends AbstractEntry
+class Cat extends AbstractEntity
 {
     /**
      * @var string

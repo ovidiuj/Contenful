@@ -1,13 +1,13 @@
 <?php
 
-namespace Entries;
+namespace Entities;
 use Silex\Application;
 
 /**
  * Class ity
  * @package Entities
  */
-class City extends AbstractEntry
+class City extends AbstractEntity
 {
     /**
      * @var string
@@ -37,8 +37,6 @@ class City extends AbstractEntry
         $this->name = $entry->fields->name;
         $this->center['lat'] = $entry->fields->center->lat;
         $this->center['lon'] = $entry->fields->center->lon;
-
-        print_r(get_object_vars($this));exit;
     }
 
     /**

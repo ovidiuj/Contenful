@@ -3,7 +3,9 @@
 namespace Twig;
 
 
-use Services\ApiRequestService;
+use Exceptions\ApiException;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Silex\Application;
 
 /**
@@ -18,14 +20,21 @@ class Helper
      * @return null
      */
     public static function getAssetUrl(Application $app, $input) {
-        $request = new ApiRequestService($app['c.api']['assetApiUrl'], ['space' => $app['space'], 'token' => $app['token'], 'asset_id' => $input] );
-        $request->performRequest();
-        $asset = json_decode($request->getResponse());
-
-        if(!empty($asset)) {
-            return $asset->fields->file->url;
+        
+        try {
+            $requestUrl = str_replace(['{space}', '{token}', '{asset_id}'], [$app['space'], $app['token'], $input], $app['c.api']['assetApiUrl']);
+            $httpClient = new Client();
+            $res = $httpClient->request('GET', $requestUrl);
+            $asset = json_decode($res->getBody());
+            
+            if(!empty($asset)) {
+                return $asset->fields->file->url;
+            }
+        } catch (ClientException $e) {
+            return new ApiException($e->getMessage());
+        } catch (\Exception $e) {
+            return new ApiException($e->getMessage());
         }
-
         return null;
     }
 
@@ -35,17 +44,24 @@ class Helper
      * @return array
      */
     public static function getEntry(Application $app, $input) {
-        $entryArr = [];
-        $request = new ApiRequestService($app['c.api']['entryApiUrl'], ['space' => $app['space'], 'token' => $app['token'], 'entry_id' => $input]);
-        $request->performRequest();
-        $entry = json_decode($request->getResponse());
+        try {
+            $entryArr = [];
+            $requestUrl = str_replace(['{space}', '{token}', '{entry_id}'], [$app['space'], $app['token'], $input], $app['c.api']['entryApiUrl']);
+            $httpClient = new Client();
+            $res = $httpClient->request('GET', $requestUrl);
+            $entry = json_decode($res->getBody());
 
-        if(!empty($entry)) {
-            $entryArr['sys']['id'] = $entry->sys->id;
-            $entryArr['name'] = $entry->fields->name;
-            return $entryArr;
+            if (!empty($entry)) {
+                $entryArr['sys']['id'] = $entry->sys->id;
+                $entryArr['name'] = $entry->fields->name;
+                return $entryArr;
+            }
+        } catch (ClientException $e) {
+            return new ApiException($e->getMessage());
+        } catch (\Exception $e) {
+            return new ApiException($e->getMessage());
         }
-
         return $entryArr;
+            
     }
 }
