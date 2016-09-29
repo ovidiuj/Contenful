@@ -66,9 +66,7 @@ class RenderSpace extends Command
         $response = $service->run();
 
         if($response) {
-            $output->writeln("\n" . "The templates were successfully generated.");
-            $output->writeln("\n" . "Run: 'ls output'");
+            $output->writeln("The templates were successfully generated.");
         }
-
     }
 }

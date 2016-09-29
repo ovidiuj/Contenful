@@ -77,7 +77,7 @@ class ContentfulService
      */
     public function run() {
         $entries = $this->getEntries();
-        if(!empty($entries)) {
+        if(!empty($entries) && isset($entries->items)) {
             foreach ($entries->items as $key => $entry) {
                 if($entry->sys->locale == 'en-US') {
                     $factory = new EntityFactory($this->app, $entry->sys->contentType->sys->id);
