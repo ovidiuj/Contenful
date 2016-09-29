@@ -62,6 +62,12 @@ class RenderSpace extends Command
         $this->app['space'] = $input->getArgument('space');
         $this->app['token'] = $input->getArgument('token');
 
+        @mkdir(OUTPUT_PATH);
+        if (!is_dir(OUTPUT_PATH)) {
+            $output->writeln('<error>Couldn\'t create directory.</error>');
+            return;
+        }
+
         $service = new ContentfulService($this->app);
         $response = $service->run();
 
